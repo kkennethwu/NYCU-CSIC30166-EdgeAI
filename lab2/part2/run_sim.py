@@ -90,7 +90,7 @@ def evaluate_ppl(model, tokenizer, device="cuda:0"):
     
     return ppl.item()
 
-def main():
+def main(nbits=4, group_size=64):
     ############## Set Up ##############
     torch.manual_seed(0)
     random.seed(0)
@@ -142,7 +142,7 @@ def main():
     print(f'Model Size After Quant: {get_size_of_model(model) / (1024 ** 2)} MiB')
     
     # TODO: Quantize    
-    quant_config = get_quant_config_slm(model)
+    quant_config = get_quant_config_slm(model, nbits=nbits, group_size=group_size)
     
     AutoHQQHFModel.quantize_model(model, quant_config=quant_config, compute_dtype=torch.float16, device=device)
 
@@ -178,6 +178,7 @@ def main():
     score += 5 if ppl <= 14 else 0
     score += 5 if quant_tput / org_tput >= 1.3 else 0
     print(f'Score: {score}')
+    return ppl, get_size_of_model(model) / (1024 ** 2), quant_tput, score
 
 if __name__ == '__main__':
     main()

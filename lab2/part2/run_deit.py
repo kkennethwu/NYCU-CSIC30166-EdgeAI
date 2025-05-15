@@ -9,7 +9,7 @@ from utils import prepare_data, evaluate_model
 
 from quant_cfg import get_quant_config_deit
 
-def main():
+def main(nbits=2, group_size=16):
     ############## Set Up ##############
     torch.manual_seed(0)
     random.seed(0)
@@ -30,7 +30,7 @@ def main():
     ##################################### 
 
     # TODO: Quantize
-    quant_config = get_quant_config_deit(model)
+    quant_config = get_quant_config_deit(model, nbits, group_size)
     
     AutoHQQTimmModel.quantize_model(model, quant_config=quant_config, compute_dtype=torch.float32, device=device)
     
@@ -40,11 +40,12 @@ def main():
     
     acc_after_quant = evaluate_model(model, test_loader, 'cuda:0')
     print(f'Accuracy After Quant: {acc_after_quant}%')
-    breakpoint()
     print(f'Model Size (MiB) {get_size_of_model(model)/ (1024 ** 2)} MiB')
     
     score = 20 - max(0, 90 - acc_after_quant) * 10 + (17 - get_size_of_model(model) / (1024 ** 2))
     print(f'Score: {score}')
+    
+    return acc_after_quant, get_size_of_model(model) / (1024 ** 2), score
 
     
 if __name__ == '__main__':
